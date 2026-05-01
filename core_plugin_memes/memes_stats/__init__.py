@@ -13,6 +13,7 @@ from gsuid_core.sv import SV
 
 from ..utils.client import MemeClientError, meme_client
 from ..utils.database import MemeRecord, parse_period
+from ..utils.gate import passes_gate
 from ..utils.manager import meme_manager
 from ..utils.render import render_top_chart
 
@@ -39,6 +40,8 @@ _SCOPE_USER_BY = ("按用户", "用户排行")
 @sv_stats.on_fullmatch(_STATS_KEYS, block=True)
 @sv_stats.on_prefix(_STATS_KEYS, block=True)
 async def _stats(bot: Bot, ev: Event):
+    if not passes_gate(ev):
+        return
     raw = ev.text.strip()
     tokens = raw.split() if raw else []
 

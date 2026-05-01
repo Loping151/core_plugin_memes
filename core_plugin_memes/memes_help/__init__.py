@@ -4,6 +4,7 @@ from gsuid_core.models import Event
 from gsuid_core.sv import SV
 
 from ..utils.client import meme_client, MemeClientError
+from ..utils.gate import passes_gate
 from ..utils.manager import meme_manager
 from ..utils.prefix import join_prefixes
 from ..utils.render import render_meme_list
@@ -17,6 +18,8 @@ _HELP_KEYS = ("表情包制作", "列表", "表情列表", "表情帮助")
 
 @sv_help.on_fullmatch(_HELP_KEYS, block=True)
 async def _show_help(bot: Bot, ev: Event):
+    if not passes_gate(ev):
+        return
     try:
         await meme_manager.init()
     except MemeClientError as e:

@@ -12,6 +12,7 @@ Plugins(
 )
 
 from . import memes_config  # noqa: F401, E402
+from . import memes_group_switch  # noqa: F401, E402
 from . import memes_help  # noqa: F401, E402
 from . import memes_info  # noqa: F401, E402
 from . import memes_make  # noqa: F401, E402

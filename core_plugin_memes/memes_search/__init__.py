@@ -4,6 +4,7 @@ from gsuid_core.sv import SV
 
 from ..memes_config.config import memes_config
 from ..utils.client import MemeClientError
+from ..utils.gate import passes_gate
 from ..utils.manager import meme_manager
 from ..utils.prefix import primary_prefix
 
@@ -17,6 +18,8 @@ _SEARCH_KEYS = ("表情搜索", "表情查找", "表情查询")
 @sv_search.on_fullmatch(_SEARCH_KEYS, block=True)
 @sv_search.on_prefix(_SEARCH_KEYS, block=True)
 async def _search(bot: Bot, ev: Event):
+    if not passes_gate(ev):
+        return
     name = ev.text.strip()
     if not name:
         return await bot.send(

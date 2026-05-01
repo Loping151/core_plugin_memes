@@ -30,6 +30,7 @@ from ..utils.event_helpers import (
     resize_to_webp,
     split_text_tokens,
 )
+from ..utils.gate import passes_gate
 from ..utils.manager import meme_manager
 from ..utils.nsfw import check_input, check_output
 from ..utils.prefix import primary_prefix
@@ -83,6 +84,8 @@ _RESERVED_PREFIXES: Tuple[str, ...] = (
     "更新表情", "刷新表情", "重载表情",
     "随机表情",
     "帮助", "插件帮助", "列表", "查看表情", "表情帮助",
+    "开启表情包", "关闭表情包", "启用表情包功能", "禁用表情包功能",
+    "本群开启表情包", "本群关闭表情包", "表情包开关", "表情包状态",
 )
 
 
@@ -343,6 +346,8 @@ async def _make_meme(bot: Bot, ev: Event):
     raw = (ev.text or "").lstrip()
     if not raw:
         return
+    if not passes_gate(ev):
+        return
     if not await _ensure_init():
         # 仅当本条消息可能是表情关键词时才提示，避免群里随便说话被骚扰
         if not _looks_like_meme_attempt(raw):
@@ -369,6 +374,8 @@ def _looks_like_meme_attempt(text: str) -> bool:
 @sv_random.on_fullmatch(("随机表情",), block=True)
 @sv_random.on_prefix(("随机表情",), block=True)
 async def _random_meme(bot: Bot, ev: Event):
+    if not passes_gate(ev):
+        return
     if not await _ensure_init():
         return await bot.send("表情包后端不可用，请检查 MemeApiUrl 配置")
     rest = ev.text.strip()

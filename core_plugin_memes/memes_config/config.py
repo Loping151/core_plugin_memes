@@ -57,6 +57,11 @@ CONFIG_DEFAULT = {
         "缩放成品图的最大边像素数",
         800,
     ),
+    "MemeAllowDirect": GsBoolConfig(
+        "允许私聊触发",
+        "关闭后，私聊（direct）发送的所有指令一律忽略；群聊不受影响",
+        True,
+    ),
     "MemeMissingTextPolicy": GsStrConfig(
         "缺少文字时的处理",
         "ignore=静默不响应；prompt=回复一条提示；不支持交互式补充",

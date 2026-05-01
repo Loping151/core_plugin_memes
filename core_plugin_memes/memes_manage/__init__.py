@@ -3,6 +3,7 @@ from gsuid_core.models import Event
 from gsuid_core.sv import SV
 
 from ..utils.client import MemeClientError
+from ..utils.gate import passes_gate
 from ..utils.manager import MemeMode, meme_manager
 from ..utils.prefix import primary_prefix
 
@@ -11,6 +12,11 @@ from ..utils.prefix import primary_prefix
 sv_manage_user = SV("表情禁启用", priority=4)
 # 全局：仅 master/superuser
 sv_manage_global = SV("表情全局管理", priority=4, pm=1)
+
+
+async def _gate_or_return(bot: Bot, ev: Event) -> bool:
+    """命令统一闸门：直接消息 / 群级开关被关 → 静默返回 False。"""
+    return passes_gate(ev)
 
 
 async def _resolve_one(bot: Bot, name: str):
@@ -36,6 +42,8 @@ async def _resolve_one(bot: Bot, name: str):
 
 @sv_manage_user.on_prefix(("禁用表情",), block=True)
 async def _disable(bot: Bot, ev: Event):
+    if not passes_gate(ev):
+        return
     name = ev.text.strip()
     if not name:
         return await bot.send(
@@ -55,6 +63,8 @@ async def _disable(bot: Bot, ev: Event):
 
 @sv_manage_user.on_prefix(("启用表情",), block=True)
 async def _enable(bot: Bot, ev: Event):
+    if not passes_gate(ev):
+        return
     name = ev.text.strip()
     if not name:
         return await bot.send(
@@ -73,6 +83,8 @@ async def _enable(bot: Bot, ev: Event):
 
 @sv_manage_global.on_prefix(("全局禁用表情",), block=True)
 async def _global_disable(bot: Bot, ev: Event):
+    if not passes_gate(ev):
+        return
     if ev.user_pm > 1:
         return await bot.send("仅 master/superuser 可设置全局禁用")
     name = ev.text.strip()
@@ -87,6 +99,8 @@ async def _global_disable(bot: Bot, ev: Event):
 
 @sv_manage_global.on_prefix(("全局启用表情",), block=True)
 async def _global_enable(bot: Bot, ev: Event):
+    if not passes_gate(ev):
+        return
     if ev.user_pm > 1:
         return await bot.send("仅 master/superuser 可设置全局启用")
     name = ev.text.strip()
@@ -101,6 +115,8 @@ async def _global_enable(bot: Bot, ev: Event):
 
 @sv_manage_global.on_fullmatch(("黑名单", "禁用列表", "黑名单列表"), block=True)
 async def _list_global_disabled(bot: Bot, ev: Event):
+    if not passes_gate(ev):
+        return
     if ev.user_pm > 1:
         return await bot.send("仅 master/superuser 可查看全局禁用列表")
     try:

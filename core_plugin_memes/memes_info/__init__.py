@@ -4,6 +4,7 @@ from gsuid_core.models import Event
 from gsuid_core.sv import SV
 
 from ..utils.client import meme_client, MemeClientError
+from ..utils.gate import passes_gate
 from ..utils.manager import meme_manager
 from ..utils.prefix import primary_prefix
 
@@ -17,6 +18,8 @@ _INFO_KEYS = ("表情详情", "表情示例", "查看表情")
 @sv_info.on_fullmatch(_INFO_KEYS, block=True)
 @sv_info.on_prefix(_INFO_KEYS, block=True)
 async def _show_info(bot: Bot, ev: Event):
+    if not passes_gate(ev):
+        return
     name = ev.text.strip()
     if not name:
         return await bot.send(f"请提供要查看的表情名，例如：{primary_prefix()}表情详情 摸")

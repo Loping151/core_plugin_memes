@@ -6,6 +6,7 @@ from gsuid_core.bot import Bot
 from gsuid_core.models import Event
 from gsuid_core.sv import SV
 
+from ..utils.gate import passes_gate
 from ..utils.prefix import all_prefixes
 from ..utils.render import render_command_help
 from ..version import CorePluginMemesVersion
@@ -90,6 +91,31 @@ _HELP_SECTIONS: List[Tuple[str, List[Tuple[str, str, str, int]]]] = [
         ],
     ),
     (
+        "本群开关",
+        [
+            (
+                "<P>开启表情包",
+                "<P0>开启表情包",
+                "在本群恢复整个插件的所有指令；任何群成员都可触发。"
+                "别名：启用表情包功能 / 本群开启表情包",
+                6,
+            ),
+            (
+                "<P>关闭表情包",
+                "<P0>关闭表情包",
+                "在本群关闭整个插件——除"
+                "“开启表情包 / 表情包开关”外的所有命令都被忽略。",
+                6,
+            ),
+            (
+                "<P>表情包开关",
+                "<P0>表情包开关",
+                "查询本群当前是开启还是关闭。",
+                6,
+            ),
+        ],
+    ),
+    (
         "全局管理（仅 master / superuser）",
         [
             (
@@ -133,6 +159,8 @@ def _expand(template: str, prefixes: List[str], primary: str) -> str:
 
 @sv_plugin_help.on_fullmatch(_HELP_KEYS, block=True)
 async def _show_plugin_help(bot: Bot, ev: Event):
+    if not passes_gate(ev):
+        return
     user_pm = ev.user_pm if isinstance(ev.user_pm, int) else 6
     prefixes = all_prefixes()
     primary = prefixes[0]

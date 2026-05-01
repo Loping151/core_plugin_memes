@@ -93,6 +93,7 @@
 | `MemeNsfwOutputThreshold` | int | 50 | 实时 | 成品图阈值（百分比） |
 | `MemeResizeImage` | bool | true | 实时 | 缩放成品图并转 WEBP |
 | `MemeResizeImageSize` | int | 800 | 实时 | 成品图最大边像素 |
+| `MemeAllowDirect` | bool | true | 实时 | 是否允许私聊触发；关闭后 direct 一律忽略 |
 | `MemeMissingTextPolicy` | str | `ignore` | 实时 | 缺文字时：`ignore` / `prompt`（不支持交互式补充） |
 | `MemeMissingImagePolicy` | str | `ignore` | 实时 | 缺图时：`ignore` / `prompt` |
 | `MemeExtraTextPolicy` | str | `drop` | 实时 | 文字过多：`drop`（截断） / `prompt` |
@@ -120,6 +121,8 @@
   的状态。**移除某个表情后，该表情的禁用记录会被保留**（不会自动清理），
   但 `mm黑名单` 等命令只显示**当前后端仍存在**的项；如果该表情后续重新出现，
   之前的禁用偏好会自动恢复。
+- `data/core_plugin_memes/group_switch.json` —— 按群关闭整个插件的群 id 集合
+  （由 `mm关闭表情包` / `mm开启表情包` 维护）。
 - gsuid 自带 ORM 表 `CorePluginMemes_Record` —— 所有调用记录（user/group/bot/time/key）；
   webconsole 自动注册"表情调用记录"管理页。
 
@@ -133,6 +136,9 @@
 | `mm/bq表情列表` | `表情包制作`、`表情帮助`、`列表` | 所有人 | **表情清单**，按 可用 / 用户禁用 / 全局禁用 分段 |
 | `mm/bq表情详情 <name>` | `表情示例`、`查看表情` | 所有人 | 关键词、参数、预览图 |
 | `mm/bq表情搜索 <name>` | `表情查找`、`表情查询` | 所有人 | 模糊搜索（含 tag） |
+| `mm/bq开启表情包` | `启用表情包功能`、`本群开启表情包` | 群内任何人 | 在本群恢复全部命令 |
+| `mm/bq关闭表情包` | `禁用表情包功能`、`本群关闭表情包` | 群内任何人 | 在本群关闭整个插件（开关命令除外） |
+| `mm/bq表情包开关` | `表情包状态` | 群内任何人 | 查询本群当前开/关状态 |
 | `mm/bq禁用表情 <name>` | – | 所有人 | 当前 user_id 自管 |
 | `mm/bq启用表情 <name>` | – | 所有人 | 取消用户级禁用 |
 | `mm/bq全局禁用表情 <name>` | – | master/SU | 切到白名单模式 |

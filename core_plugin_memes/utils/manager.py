@@ -56,6 +56,7 @@ class MemeManager:
         base = Path(get_res_path()) / "core_plugin_memes"
         os.makedirs(base, exist_ok=True)
         self._path = base / "manager.json"
+        self._group_switch_path = base / "group_switch.json"
         self._lock = asyncio.Lock()
         self._loaded = False
         self._ready = False
@@ -69,6 +70,9 @@ class MemeManager:
         # 首字符桶：first_char → 按 len desc 排序的 name 列表，用于长前缀匹配
         self._first_char_index: Dict[str, List[str]] = {}
         self._duplicate_names: Dict[str, List[str]] = {}
+        # 按群关闭整个表情包功能的群 id 集合
+        self._group_disabled: set = set()
+        self._group_switch_loaded = False
 
     # ---- persistence ----
 
@@ -93,6 +97,56 @@ class MemeManager:
             ),
             "utf-8",
         )
+
+    def _load_group_switch(self) -> None:
+        if self._group_switch_loaded:
+            return
+        self._group_switch_loaded = True
+        if self._group_switch_path.exists():
+            try:
+                raw = json.loads(self._group_switch_path.read_text("utf-8"))
+                self._group_disabled = set(str(g) for g in (raw.get("disabled_groups") or []))
+            except Exception as e:
+                logger.warning(f"[core_plugin_memes] group_switch.json 解析失败：{e}")
+                self._group_disabled = set()
+
+    def _dump_group_switch(self) -> None:
+        self._group_switch_path.parent.mkdir(parents=True, exist_ok=True)
+        self._group_switch_path.write_text(
+            json.dumps(
+                {"disabled_groups": sorted(self._group_disabled)},
+                ensure_ascii=False,
+                indent=2,
+            ),
+            "utf-8",
+        )
+
+    # ---- 按群开关 ----
+
+    def is_group_enabled(self, group_id) -> bool:
+        if group_id is None:
+            return True
+        self._load_group_switch()
+        return str(group_id) not in self._group_disabled
+
+    def disable_group(self, group_id) -> bool:
+        """关闭后返回是否产生变化。"""
+        self._load_group_switch()
+        gid = str(group_id)
+        if gid in self._group_disabled:
+            return False
+        self._group_disabled.add(gid)
+        self._dump_group_switch()
+        return True
+
+    def enable_group(self, group_id) -> bool:
+        self._load_group_switch()
+        gid = str(group_id)
+        if gid not in self._group_disabled:
+            return False
+        self._group_disabled.discard(gid)
+        self._dump_group_switch()
+        return True
 
     # ---- init ----
 
