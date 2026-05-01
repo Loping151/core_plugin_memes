@@ -168,6 +168,6 @@ NSFW 检测耗时较长，且不能保证刁钻 NSFW 过滤，酌情启用。
 
 - [meme-generator](https://github.com/MemeCrafters/meme-generator) / [meme-generator-rs](https://github.com/MemeCrafters/meme-generator-rs)
   —— 后端能力来源
-- [nonebot_plugin_memes_api](https://github.com/MemeCrafters/nonebot-plugin-memes-api) —— 命令面与黑/白名单设计的灵感来源
+- [nonebot-plugin-memes-api](https://github.com/MemeCrafters/nonebot-plugin-memes-api) —— 部分参考
 - [gsuid_core](https://github.com/Genshin-bots/gsuid_core) —— 插件运行时
 - [nsfwpy](https://pypi.org/project/nsfwpy/) —— 可选 NSFW 检测后端
