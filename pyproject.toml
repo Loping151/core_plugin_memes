@@ -1,0 +1,24 @@
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[project]
+name = "core_plugin_memes"
+version = "0.1.0"
+description = "gsuid_core 表情包(memes)插件，对接 meme-generator / meme-generator-rs HTTP 后端"
+authors = [
+  { name = "Loping151", email = "wkl@loping151.com" },
+]
+license = { text = "GPL-3.0-or-later" }
+readme = "README.md"
+requires-python = ">=3.10, <4.0"
+dependencies = [
+    "httpx>=0.24.0",
+    "Pillow>=10.0.0",
+    "sqlmodel>=0.0.14",
+    "sqlalchemy>=2.0.0",
+]
+
+[project.urls]
+homepage = "https://github.com/Loping151/core_plugin_memes"
+repository = "https://github.com/Loping151/core_plugin_memes"
