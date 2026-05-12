@@ -174,6 +174,16 @@ class MemeManager:
                 )
             finally:
                 self._loading = False
+
+        # 把当前可用 meme 列表落到 AI Core 知识库（不阻塞 init 返回）
+        try:
+            import asyncio
+            from .ai_kb import sync_memes_kb_async
+
+            asyncio.create_task(sync_memes_kb_async(), name="core_plugin_memes:ai-kb-sync")
+        except Exception:
+            logger.exception("[core_plugin_memes] AI KB 同步任务调度失败")
+
         return ok, fail
 
     @property

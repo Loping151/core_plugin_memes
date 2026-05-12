@@ -16,7 +16,17 @@ _INFO_KEYS = ("表情详情", "表情示例", "查看表情")
 
 
 @sv_info.on_fullmatch(_INFO_KEYS, block=True)
-@sv_info.on_prefix(_INFO_KEYS, block=True)
+@sv_info.on_prefix(
+    _INFO_KEYS,
+    block=True,
+    to_ai="""查询单个表情的详情（关键词 / 图片需求 / 文字需求 / 可选参数 / 示例图）。
+
+当用户问「XX 表情详情 / 看看 XX 表情 / XX 表情怎么用」时调用。
+
+Args:
+    text: 表情关键词，必填。例如 "拍 / 摸 / 点赞"。
+""",
+)
 async def _show_info(bot: Bot, ev: Event):
     if not passes_gate(ev):
         return

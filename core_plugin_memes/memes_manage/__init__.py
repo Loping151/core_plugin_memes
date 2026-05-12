@@ -95,6 +95,12 @@ async def _global_disable(bot: Bot, ev: Event):
         return
     meme_manager.set_global_mode(info.key, MemeMode.WHITE)
     await bot.send(f"表情 {info.key} 已设为全局禁用（白名单模式）")
+    try:
+        from ..utils.ai_kb import sync_memes_kb_async
+
+        await sync_memes_kb_async()
+    except Exception:
+        pass
 
 
 @sv_manage_global.on_prefix(("全局启用表情",), block=True)
@@ -111,6 +117,12 @@ async def _global_enable(bot: Bot, ev: Event):
         return
     meme_manager.set_global_mode(info.key, MemeMode.BLACK)
     await bot.send(f"表情 {info.key} 已恢复全局启用（黑名单模式）")
+    try:
+        from ..utils.ai_kb import sync_memes_kb_async
+
+        await sync_memes_kb_async()
+    except Exception:
+        pass
 
 
 @sv_manage_global.on_fullmatch(("黑名单", "禁用列表", "黑名单列表"), block=True)

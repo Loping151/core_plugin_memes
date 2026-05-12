@@ -38,7 +38,21 @@ _SCOPE_USER_BY = ("按用户", "用户排行")
 
 
 @sv_stats.on_fullmatch(_STATS_KEYS, block=True)
-@sv_stats.on_prefix(_STATS_KEYS, block=True)
+@sv_stats.on_prefix(
+    _STATS_KEYS,
+    block=True,
+    to_ai="""查询表情包调用次数 top 排行（默认本群本日 top10）。
+
+当用户问「表情统计 / 表情排行 / 最近哪个表情用得多 / 谁最爱用表情」时调用。
+可选 token（按需用空格拼到 text 里）：
+- 时间窗：`日 / 本日 / 24小时 / 周 / 7天 / 本周 / 月 / 30天 / 本月 / 年 / 本年`
+- 维度：`我的 / 全局 / 群 / 本群 / 按群 / 按用户`
+- 末尾可选具体表情关键词限定单 meme 统计
+
+Args:
+    text: 留空走默认；或形如 "月 全局" / "本周 我的" / "本日 按用户 摸"。
+""",
+)
 async def _stats(bot: Bot, ev: Event):
     if not passes_gate(ev):
         return

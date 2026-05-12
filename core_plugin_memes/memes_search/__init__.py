@@ -16,7 +16,17 @@ _SEARCH_KEYS = ("表情搜索", "表情查找", "表情查询")
 
 
 @sv_search.on_fullmatch(_SEARCH_KEYS, block=True)
-@sv_search.on_prefix(_SEARCH_KEYS, block=True)
+@sv_search.on_prefix(
+    _SEARCH_KEYS,
+    block=True,
+    to_ai="""根据关键词/标签搜索 meme，返回符合条件的表情列表图。
+
+当用户问「有什么 XX 表情 / 表情搜索 XX / 找有 XX 的表情」时调用。
+
+Args:
+    text: 搜索词，必填。空字符串会返回错误提示。
+""",
+)
 async def _search(bot: Bot, ev: Event):
     if not passes_gate(ev):
         return

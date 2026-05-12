@@ -157,7 +157,17 @@ def _expand(template: str, prefixes: List[str], primary: str) -> str:
     )
 
 
-@sv_plugin_help.on_fullmatch(_HELP_KEYS, block=True)
+@sv_plugin_help.on_fullmatch(
+    _HELP_KEYS,
+    block=True,
+    to_ai="""返回表情包插件本身的命令帮助图（按用户权限筛掉看不到的条目）。
+
+当用户问「表情包帮助 / 表情插件帮助 / 表情包怎么用 / 这个 meme 插件有哪些指令」时调用。
+
+Args:
+    text: 无需参数。
+""",
+)
 async def _show_plugin_help(bot: Bot, ev: Event):
     if not passes_gate(ev):
         return

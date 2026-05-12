@@ -16,7 +16,17 @@ sv_help = SV("表情包列表", priority=4)
 _HELP_KEYS = ("表情包制作", "列表", "表情列表", "表情帮助")
 
 
-@sv_help.on_fullmatch(_HELP_KEYS, block=True)
+@sv_help.on_fullmatch(
+    _HELP_KEYS,
+    block=True,
+    to_ai="""渲染当前后端全部可用表情的总览图，分段显示「可用 / 当前用户被禁用 / 全局禁用」。
+
+当用户问「表情列表 / 表情帮助 / 都有什么表情 / 列表」想看一眼全部 meme 时调用。
+
+Args:
+    text: 无需参数。
+""",
+)
 async def _show_help(bot: Bot, ev: Event):
     if not passes_gate(ev):
         return

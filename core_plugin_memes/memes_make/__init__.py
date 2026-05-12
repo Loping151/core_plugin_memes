@@ -341,7 +341,31 @@ async def _do_make(
 # ---- catch-all 表情生成 ----
 
 
-@sv_make.on_prefix("", block=True)
+@sv_make.on_prefix(
+    "",
+    block=True,
+    to_ai="""制作表情包：根据用户给的关键词 + 可选图片/文字/at 生成对应表情图片。
+
+当用户想要"生成一张 XX 表情"、「整一张 XX」、「来个 XX 表情」、「制作表情包」等时调用。
+也可以在用户聊天里需要应景表情时主动调用（贴一张应景表情图）。
+
+参数文本约定（必须把 text 拼成这个格式）：
+- 文本开头是表情关键词（如「拍」「摸」「点赞」），关键词后可紧跟可选 token。
+- 多余 token 之间用空格分隔。可用 token：
+    * 普通文字：表情内填入的台词。
+    * `自己`：用调用者本人的头像。
+    * `@123456`：把指定 QQ 头像当作素材图。
+    * `--<option> <value>`：表情专属选项（先调 `查看表情详情` 拿到选项名）。
+- 若关键词需要图片但没给，系统会自动用调用者头像兜底。
+- 别用本指令请求 NSFW/敏感内容，后端会拦截。
+
+如果不确定具体关键词，先调 `表情搜索` 或 `查看表情详情` 工具确认。
+被全局禁用的表情不要调；下面 KB 里没出现的 meme 大概率不可用。
+
+Args:
+    text: 关键词 + 可选 token 的整段文本。例如 "拍 你好 自己"、"摸 @644572093"、"点赞 牛逼"。
+""",
+)
 async def _make_meme(bot: Bot, ev: Event):
     raw = (ev.text or "").lstrip()
     if not raw:
@@ -371,7 +395,18 @@ def _looks_like_meme_attempt(text: str) -> bool:
 # ---- 随机表情 ----
 
 
-@sv_random.on_fullmatch(("随机表情",), block=True)
+@sv_random.on_fullmatch(
+    ("随机表情",),
+    block=True,
+    to_ai="""随机抽一张当前可用、参数能匹配上调用者所给图片/文字数量的表情图。
+
+当用户说「随机来一张表情 / 随便整一张 / 随机表情」时调用。可附 `自己 / @QQ / 文字` 等
+token 以缩窄候选。
+
+Args:
+    text: 留空即可；如果想给图/文，按 `<text/token...>` 格式（与 `表情包制作` 一致）。
+""",
+)
 @sv_random.on_prefix(("随机表情",), block=True)
 async def _random_meme(bot: Bot, ev: Event):
     if not passes_gate(ev):
