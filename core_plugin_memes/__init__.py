@@ -22,6 +22,9 @@ from . import memes_refresh  # noqa: F401, E402
 from . import memes_search  # noqa: F401, E402
 from . import memes_stats  # noqa: F401, E402
 
+# AI self-类直通工具，主 agent 每次都加载，绕开 by_trigger 阈值过滤
+from .utils import ai_tools as _ai_tools  # noqa: F401, E402
+
 
 @on_core_start
 async def _bootstrap_memes() -> None:
