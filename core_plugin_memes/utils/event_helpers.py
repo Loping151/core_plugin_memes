@@ -29,7 +29,7 @@ async def fetch_image_bytes(url_or_b64: str) -> Optional[bytes]:
                 resp.raise_for_status()
                 return resp.content
         except Exception as e:
-            logger.warning(f"[core_plugin_memes] 下载图片失败 {url_or_b64}: {e}")
+            logger.warning(f"[memes·事件] 下载图片失败 {url_or_b64}: {e}")
             return None
     if url_or_b64.startswith("base64://"):
         import base64
@@ -41,7 +41,7 @@ async def fetch_image_bytes(url_or_b64: str) -> Optional[bytes]:
             with open(path, "rb") as f:
                 return f.read()
         except Exception as e:
-            logger.warning(f"[core_plugin_memes] 读取本地图片失败 {path}: {e}")
+            logger.warning(f"[memes·事件] 读取本地图片失败 {path}: {e}")
             return None
     return None
 
@@ -199,5 +199,5 @@ def resize_to_webp(data: bytes, max_size: int) -> bytes:
         img.save(buf, format="WEBP", quality=92)
         return buf.getvalue()
     except Exception as e:
-        logger.warning(f"[core_plugin_memes] 缩放图片失败：{e}")
+        logger.warning(f"[memes·事件] 缩放图片失败：{e}")
         return data

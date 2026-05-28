@@ -32,7 +32,7 @@ async def _get_detector():
         try:
             from nsfwpy import NSFW  # type: ignore
         except ImportError:
-            logger.info("[core_plugin_memes] 未安装 nsfwpy，跳过 NSFW 检测")
+            logger.info("[memes·NSFW] 未安装 nsfwpy，跳过 NSFW 检测")
             _detector = None
             return None
         model = (memes_config.get_config("MemeNsfwModel").data or "").strip() or None
@@ -42,10 +42,10 @@ async def _get_detector():
             try:
                 _detector = NSFW(model) if model else NSFW()
             except Exception as e:
-                logger.warning(f"[core_plugin_memes] NSFW 初始化失败：{e}")
+                logger.warning(f"[memes·NSFW] NSFW 初始化失败：{e}")
                 _detector = None
         except Exception as e:
-            logger.warning(f"[core_plugin_memes] NSFW 初始化失败：{e}")
+            logger.warning(f"[memes·NSFW] NSFW 初始化失败：{e}")
             _detector = None
         return _detector
 
@@ -98,7 +98,7 @@ async def _score(data: bytes) -> Optional[float]:
             neutral = float(result.get("neutral", 0.0) or 0.0)
             return drawing + neutral
         except Exception as e:
-            logger.warning(f"[core_plugin_memes] NSFW 推理失败：{e}")
+            logger.warning(f"[memes·NSFW] NSFW 推理失败：{e}")
             return None
 
     return await asyncio.to_thread(_run)

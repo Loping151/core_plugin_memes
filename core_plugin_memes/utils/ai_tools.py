@@ -61,7 +61,7 @@ async def search_meme_kb(
             plugin_filter=["core_plugin_memes"],
         )
     except Exception as e:
-        logger.exception("[search_meme_kb] query_knowledge 失败")
+        logger.exception("[memes·知识库搜索] query_knowledge 失败")
         return f"meme KB 检索失败: {e}"
 
     items = []
@@ -126,7 +126,7 @@ async def meme_make(
     try:
         await _handler(bot, ev)
     except Exception as e:
-        logger.exception("[meme_make] _make_meme 失败")
+        logger.exception("[memes·制作] _make_meme 失败")
         return f"meme 生成失败: {e}"
     return f"已尝试生成 meme: keyword={keyword!r}，图片已直接发给用户。"
 
@@ -161,6 +161,6 @@ async def meme_random(
     try:
         await _handler(bot, ev)
     except Exception as e:
-        logger.exception("[meme_random] _random_meme 失败")
+        logger.exception("[memes·随机] _random_meme 失败")
         return f"随机 meme 失败: {e}"
     return "已抽取一张随机 meme，图片已发给用户。"

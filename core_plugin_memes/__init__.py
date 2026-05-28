@@ -39,7 +39,7 @@ async def _bootstrap_memes() -> None:
 
     base = (memes_config.get_config("MemeApiUrl").data or "").strip()
     if not base:
-        logger.info("[core_plugin_memes] MemeApiUrl 未配置，跳过启动预热")
+        logger.info("[memes·插件] MemeApiUrl 未配置，跳过启动预热")
         return
 
     async def _go() -> None:
@@ -47,9 +47,9 @@ async def _bootstrap_memes() -> None:
             await meme_manager.init()
         except MemeClientError as e:
             logger.warning(
-                f"[core_plugin_memes] 启动预热失败：{e.message}（后续命令会重试）"
+                f"[memes·插件] 启动预热失败：{e.message}（后续命令会重试）"
             )
         except Exception as e:  # noqa: BLE001
-            logger.exception(f"[core_plugin_memes] 启动预热异常：{e}")
+            logger.exception(f"[memes·插件] 启动预热异常：{e}")
 
     asyncio.create_task(_go(), name="core_plugin_memes:bootstrap")

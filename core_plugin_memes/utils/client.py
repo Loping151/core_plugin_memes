@@ -115,7 +115,7 @@ class MemeClient:
             configured = self.configured_type()
             if configured in ("py", "rs"):
                 self._backend = configured  # type: ignore[assignment]
-                logger.info(f"[core_plugin_memes] 后端类型：{configured}（手动配置）")
+                logger.info(f"[memes·客户端] 后端类型：{configured}（手动配置）")
                 return self._backend  # type: ignore[return-value]
 
             base = self.base_url()
@@ -127,19 +127,19 @@ class MemeClient:
                     resp = await client.get(f"{base}/memes/keys")
                     if resp.status_code == 200 and isinstance(resp.json(), list):
                         self._backend = "py"
-                        logger.info("[core_plugin_memes] 后端探测：Python 版")
+                        logger.info("[memes·客户端] 后端探测：Python 版")
                         return self._backend
                 except Exception as e:
-                    logger.debug(f"[core_plugin_memes] /memes/keys 探测失败：{e}")
+                    logger.debug(f"[memes·客户端] /memes/keys 探测失败：{e}")
 
                 try:
                     resp = await client.get(f"{base}/meme/keys")
                     if resp.status_code == 200 and isinstance(resp.json(), list):
                         self._backend = "rs"
-                        logger.info("[core_plugin_memes] 后端探测：Rust 版")
+                        logger.info("[memes·客户端] 后端探测：Rust 版")
                         return self._backend
                 except Exception as e:
-                    logger.debug(f"[core_plugin_memes] /meme/keys 探测失败：{e}")
+                    logger.debug(f"[memes·客户端] /meme/keys 探测失败：{e}")
 
             raise MemeClientError("无法连接到 meme-generator 后端，请检查 MemeApiUrl 配置")
 
@@ -206,12 +206,12 @@ class MemeClient:
                         except Exception as e:
                             fail += 1
                             logger.warning(
-                                f"[core_plugin_memes] 解析 info 失败：{e}"
+                                f"[memes·客户端] 解析 info 失败：{e}"
                             )
                     return ok, fail
             except Exception as e:
                 logger.warning(
-                    f"[core_plugin_memes] /meme/infos 失败，回退到并行 per-key 拉取：{e}"
+                    f"[memes·客户端] /meme/infos 失败，回退到并行 per-key 拉取：{e}"
                 )
 
         # Python 后端 / Rust 兜底：并行 per-key
@@ -226,7 +226,7 @@ class MemeClient:
                     self._info_cache[info.key] = info
                     return True
                 except Exception as e:
-                    logger.warning(f"[core_plugin_memes] 获取 {key} info 失败：{e}")
+                    logger.warning(f"[memes·客户端] 获取 {key} info 失败：{e}")
                     return False
 
         async with httpx.AsyncClient(

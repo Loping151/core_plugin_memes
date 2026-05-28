@@ -67,9 +67,9 @@ async def _kickoff_init() -> None:
         try:
             await meme_manager.init()
         except MemeClientError as e:
-            logger.warning(f"[core_plugin_memes] 初始化失败：{e.message}")
+            logger.warning(f"[memes·制作] 初始化失败：{e.message}")
         except Exception as e:  # noqa: BLE001
-            logger.exception(f"[core_plugin_memes] 初始化失败：{e}")
+            logger.exception(f"[memes·制作] 初始化失败：{e}")
 
 
 # ---- 关键词匹配 ----
@@ -291,7 +291,7 @@ async def _do_make(
     except MemeClientError as e:
         return await bot.send(f"生成失败：{e.message}")
     except Exception as e:
-        logger.exception("[core_plugin_memes] 调用后端失败")
+        logger.exception("[memes·制作] 调用后端失败")
         return await bot.send(f"生成失败：{e}")
 
     # 输出门 NSFW
@@ -320,7 +320,7 @@ async def _do_make(
             meme_keyword=keyword or info.key,
         )
     except Exception as e:
-        logger.warning(f"[core_plugin_memes] 写入调用记录失败：{e}")
+        logger.warning(f"[memes·制作] 写入调用记录失败：{e}")
 
     # 把 "指令: <prefix><keyword>" + 提示 + 图片合到一条多模态消息里发出
     parts: List[Any] = []

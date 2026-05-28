@@ -92,7 +92,7 @@ def register_memes_to_kb() -> int:
     try:
         from gsuid_core.ai_core.register import _ENTITIES, ai_entity
     except Exception:
-        logger.debug("[core_plugin_memes][AI-KB] AI Core register 不可用，跳过")
+        logger.debug("[memes·AI-KB] AI Core register 不可用，跳过")
         return 0
 
     from .client import meme_client
@@ -110,7 +110,7 @@ def register_memes_to_kb() -> int:
         try:
             kp = _build_meme_kp(info)
         except Exception:
-            logger.exception(f"[core_plugin_memes][AI-KB] 构造 KP 失败: {key}")
+            logger.exception(f"[memes·AI-KB] 构造 KP 失败: {key}")
             continue
         ai_entity(kp)
         count += 1
@@ -136,4 +136,4 @@ async def sync_memes_kb_async() -> None:
 
         await sync_knowledge()
     except Exception:
-        logger.exception("[core_plugin_memes][AI-KB] sync_knowledge 失败")
+        logger.exception("[memes·AI-KB] sync_knowledge 失败")

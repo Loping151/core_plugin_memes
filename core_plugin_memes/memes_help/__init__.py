@@ -35,7 +35,7 @@ async def _show_help(bot: Bot, ev: Event):
     except MemeClientError as e:
         return await bot.send(f"无法连接表情包后端：{e.message}")
     except Exception as e:
-        logger.exception("[core_plugin_memes] 初始化失败")
+        logger.exception("[memes·帮助] 初始化失败")
         return await bot.send(f"加载表情列表失败：{e}")
 
     memes = await meme_manager.get_all()

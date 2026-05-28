@@ -84,7 +84,7 @@ class MemeManager:
                     k: MemeStateConfig.from_dict(v) for k, v in raw.items()
                 }
             except Exception as e:
-                logger.warning(f"[core_plugin_memes] manager.json 解析失败：{e}")
+                logger.warning(f"[memes·管理器] manager.json 解析失败：{e}")
                 self._state = {}
 
     def _dump(self) -> None:
@@ -107,7 +107,7 @@ class MemeManager:
                 raw = json.loads(self._group_switch_path.read_text("utf-8"))
                 self._group_disabled = set(str(g) for g in (raw.get("disabled_groups") or []))
             except Exception as e:
-                logger.warning(f"[core_plugin_memes] group_switch.json 解析失败：{e}")
+                logger.warning(f"[memes·管理器] group_switch.json 解析失败：{e}")
                 self._group_disabled = set()
 
     def _dump_group_switch(self) -> None:
@@ -155,7 +155,7 @@ class MemeManager:
         async with self._lock:
             self._loading = True
             try:
-                logger.info("[core_plugin_memes] 开始拉取后端表情元数据，请稍候…")
+                logger.info("[memes·管理器] 开始拉取后端表情元数据，请稍候…")
                 ok, fail = await meme_client.refresh_all()
                 if not self._loaded:
                     self._load()
@@ -170,7 +170,7 @@ class MemeManager:
                 await self._rebuild_indexes(keys)
                 self._ready = True
                 logger.success(
-                    f"[core_plugin_memes] 拉取完成 ✅  共 {len(keys)} 个表情可用"
+                    f"[memes·管理器] 拉取完成 ✅  共 {len(keys)} 个表情可用"
                 )
             finally:
                 self._loading = False
@@ -182,7 +182,7 @@ class MemeManager:
 
             asyncio.create_task(sync_memes_kb_async(), name="core_plugin_memes:ai-kb-sync")
         except Exception:
-            logger.exception("[core_plugin_memes] AI KB 同步任务调度失败")
+            logger.exception("[memes·管理器] AI KB 同步任务调度失败")
 
         return ok, fail
 
@@ -204,7 +204,7 @@ class MemeManager:
             try:
                 info = await meme_client.get_info(key)
             except Exception as e:
-                logger.warning(f"[core_plugin_memes] 索引 {key} 失败：{e}")
+                logger.warning(f"[memes·管理器] 索引 {key} 失败：{e}")
                 continue
             names = {key.lower()}
             for kw in info.keywords:
@@ -226,7 +226,7 @@ class MemeManager:
         if self._duplicate_names:
             sample = list(self._duplicate_names.items())[:8]
             logger.warning(
-                f"[core_plugin_memes] 检测到 {len(self._duplicate_names)} 个同名冲突，"
+                f"[memes·管理器] 检测到 {len(self._duplicate_names)} 个同名冲突，"
                 "仅保留首个 meme（按后端 keys 顺序）。示例：\n  "
                 + "\n  ".join(
                     f"'{n}' → {ks}" for n, ks in sample
@@ -242,7 +242,7 @@ class MemeManager:
             bucket.sort(key=lambda n: (-len(n), n))
 
         logger.info(
-            f"[core_plugin_memes] 索引完成：{len(self._name_index)} 个名称，"
+            f"[memes·管理器] 索引完成：{len(self._name_index)} 个名称，"
             f"{len(self._tag_index)} 个 tag，分布到 {len(self._first_char_index)} 个首字符桶"
         )
 
@@ -303,7 +303,7 @@ class MemeManager:
         try:
             result_keys = await meme_client.search(name, include_tags=include_tags)
         except Exception as e:
-            logger.debug(f"[core_plugin_memes] 后端 search 失败，本地兜底：{e}")
+            logger.debug(f"[memes·管理器] 后端 search 失败，本地兜底：{e}")
 
         if not result_keys:
             result_keys = self._fuzzy_local(name, include_tags, score_cutoff)

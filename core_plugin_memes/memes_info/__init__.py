@@ -112,7 +112,7 @@ async def _show_info(bot: Bot, ev: Event):
     try:
         preview = await meme_client.generate_preview(info.key)
     except Exception as e:
-        logger.warning(f"[core_plugin_memes] 预览失败：{e}")
+        logger.warning(f"[memes·信息] 预览失败：{e}")
         return await bot.send(info_msg + "\n（预览生成失败）")
 
     await bot.send(info_msg)

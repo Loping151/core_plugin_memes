@@ -175,7 +175,7 @@ async def _stats(bot: Bot, ev: Event):
         img = render_top_chart(title, rows)
         await bot.send(img)
     except Exception as e:
-        logger.warning(f"[core_plugin_memes] 渲染统计图失败：{e}")
+        logger.warning(f"[memes·统计] 渲染统计图失败：{e}")
         text = "\n".join(f"{i + 1}. {label} - {n}" for i, (label, n) in enumerate(rows))
         await bot.send(f"{title}\n{text}")
 
