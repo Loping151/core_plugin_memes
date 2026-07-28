@@ -13,7 +13,8 @@ from PIL import Image
 from gsuid_core.logger import logger
 from gsuid_core.models import Event
 
-from .client import NormalizedMemeInfo
+from ..memes_config.config import memes_config
+from .client import NormalizedMemeInfo, NormalizedOption
 
 
 # ---- 图像 ----
@@ -80,16 +81,63 @@ def get_sender_name(ev: Event) -> str:
 _AT_PATTERN = re.compile(r"@(\d{3,})")
 
 
+_ESCAPE_MAP = {"n": "\n", "t": "\t", "r": "\r", "\\": "\\"}
+_ESCAPE_PATTERN = re.compile(r"\\(.)")
+
+
+def unescape(text: str) -> str:
+    r"""\n \t \r \\ 转真实字符，其余 \x 原样保留。"""
+    return _ESCAPE_PATTERN.sub(
+        lambda m: _ESCAPE_MAP.get(m.group(1), m.group(0)), text
+    )
+
+
+def unescape_enabled() -> bool:
+    try:
+        return bool(memes_config.get_config("MemeUnescapeText").data)
+    except Exception:
+        return True
+
+
 def split_text_tokens(text: str) -> List[str]:
-    """命令风格分词，保留 quoted segment。"""
+    """命令风格分词：空格分词，引号内保留空格，反斜杠不参与分词。"""
     text = text.strip()
     if not text:
         return []
     try:
-        tokens = shlex.split(text, posix=True)
+        lex = shlex.shlex(text, posix=True)
+        lex.whitespace_split = True
+        lex.commenters = ""
+        lex.escape = ""  # 反斜杠交给 unescape 处理，分词阶段原样保留
+        tokens = list(lex)
     except ValueError:
         tokens = text.split()
     return [t for t in tokens if t]
+
+
+def single_text_enabled() -> bool:
+    try:
+        return bool(memes_config.get_config("MemeSingleTextWhole").data)
+    except Exception:
+        return True
+
+
+def _build_options_index(info: NormalizedMemeInfo) -> Dict[str, NormalizedOption]:
+    options_index: Dict[str, NormalizedOption] = {}
+    for opt in info.options:
+        for alias in [opt.name] + opt.short_aliases + opt.long_aliases:
+            if not alias:
+                continue
+            stripped = alias.lstrip("-")
+            if not stripped:
+                continue
+            cands = {alias, stripped, f"--{stripped}"}
+            if len(stripped) == 1:
+                cands.add(f"-{stripped}")
+            for cand in cands:
+                options_index.setdefault(cand, opt)
+                options_index.setdefault(cand.lower(), opt)
+    return options_index
 
 
 def parse_meme_invocation(
@@ -97,22 +145,12 @@ def parse_meme_invocation(
 ) -> Tuple[List[str], List[str], Dict[str, Any]]:
     """从 token 列表里抽取 (texts, at_user_ids, options)。
 
-    - 形如 `--xxx` / `--xxx=v` 的 token 被解析为 option
+    - 形如 `-x` / `--xxx` / `--xxx=v` 的 token 被解析为 option
     - 形如 `@123` 的 token 被记为 at_user_id（用对应 QQ 头像）
     - `自己` 被记为占位 `__self__`
     - 其他文字进入 texts
     """
-    options_index: Dict[str, Tuple[str, str]] = {}
-    # name → (canonical_name, type)
-    for opt in info.options:
-        canonical = opt.name
-        opt_type = opt.type
-        for alias in [opt.name] + opt.short_aliases + opt.long_aliases:
-            if not alias:
-                continue
-            for cand in {alias, alias.lstrip("-"), f"--{alias.lstrip('-')}"}:
-                options_index[cand] = (canonical, opt_type)
-                options_index[cand.lower()] = (canonical, opt_type)
+    options_index = _build_options_index(info)
 
     texts: List[str] = []
     at_user_ids: List[str] = []
@@ -125,21 +163,25 @@ def parse_meme_invocation(
         # --opt=value
         if tok.startswith("--") and "=" in tok:
             head, _, val = tok.partition("=")
-            if head in options_index:
-                name, opt_type = options_index[head]
-                options[name] = _coerce(val, opt_type)
+            opt = options_index.get(head)
+            if opt is not None:
+                options[opt.name] = (
+                    _coerce(val, opt.type) if opt.takes_value else opt.const_value
+                )
                 i += 1
                 continue
 
         # --opt [value?]
-        if tok in options_index:
-            name, opt_type = options_index[tok]
-            if opt_type == "boolean":
-                options[name] = True
+        opt = options_index.get(tok)
+        if opt is not None:
+            if not opt.takes_value or opt.type == "boolean":
+                options[opt.name] = (
+                    opt.const_value if opt.const_value is not None else True
+                )
                 i += 1
                 continue
             if i + 1 < len(tokens):
-                options[name] = _coerce(tokens[i + 1], opt_type)
+                options[opt.name] = _coerce(tokens[i + 1], opt.type)
                 i += 2
                 continue
             i += 1
@@ -160,6 +202,103 @@ def parse_meme_invocation(
         texts.append(tok)
         i += 1
 
+    if unescape_enabled():
+        texts = [unescape(t) for t in texts]
+
+    return texts, at_user_ids, options
+
+
+# 引号段整体算一个词，其余按空白切
+_WORD_PATTERN = re.compile(r"\"[^\"]*\"|'[^']*'|\S+")
+
+
+def _strip_wrapping_quotes(text: str) -> str:
+    if len(text) >= 2 and text[0] == text[-1] and text[0] in "\"'":
+        inner = text[1:-1]
+        if text[0] not in inner:
+            return inner
+    return text
+
+
+def parse_single_text_invocation(
+    info: NormalizedMemeInfo, raw_text: str
+) -> Tuple[List[str], List[str], Dict[str, Any]]:
+    """只要 1 段文字的表情：剥掉 option/@ 后，剩下的原文整段作为一段文字。"""
+    options_index = _build_options_index(info)
+    at_user_ids: List[str] = []
+    options: Dict[str, Any] = {}
+    kept: List[Tuple[int, int]] = []
+    consumed: List[Tuple[int, int]] = []
+
+    words = [
+        (m.start(), m.end(), m.group()) for m in _WORD_PATTERN.finditer(raw_text)
+    ]
+    i = 0
+    while i < len(words):
+        start, end, word = words[i]
+
+        if word.startswith("--") and "=" in word:
+            head, _, val = word.partition("=")
+            opt = options_index.get(head)
+            if opt is not None:
+                options[opt.name] = (
+                    _coerce(_strip_wrapping_quotes(val), opt.type)
+                    if opt.takes_value
+                    else opt.const_value
+                )
+                consumed.append((start, end))
+                i += 1
+                continue
+
+        opt = options_index.get(word) or options_index.get(word.lower())
+        if opt is not None:
+            if not opt.takes_value or opt.type == "boolean":
+                options[opt.name] = (
+                    opt.const_value if opt.const_value is not None else True
+                )
+                consumed.append((start, end))
+                i += 1
+                continue
+            if i + 1 < len(words):
+                options[opt.name] = _coerce(
+                    _strip_wrapping_quotes(words[i + 1][2]), opt.type
+                )
+                consumed.append((start, words[i + 1][1]))
+                i += 2
+                continue
+            consumed.append((start, end))
+            i += 1
+            continue
+
+        if _AT_PATTERN.fullmatch(word):
+            at_user_ids.append(word[1:])
+            consumed.append((start, end))
+            i += 1
+            continue
+
+        if word == "自己":
+            at_user_ids.append("__self__")
+            consumed.append((start, end))
+            i += 1
+            continue
+
+        kept.append((start, end))
+        i += 1
+
+    texts: List[str] = []
+    if kept:
+        first, last = kept[0][0], kept[-1][1]
+        # option/@ 夹在文字中间时不能直接切原文，退化成空格拼接
+        if any(first <= c[0] and c[1] <= last for c in consumed):
+            text = " ".join(raw_text[s:e] for s, e in kept)
+        else:
+            text = raw_text[first:last]
+        text = _strip_wrapping_quotes(text.strip())
+        if unescape_enabled():
+            text = unescape(text)
+        if text:
+            texts.append(text)
+
     return texts, at_user_ids, options
 
 
@@ -176,7 +315,7 @@ def _coerce(val: str, opt_type: str) -> Any:
             return float(val)
         except ValueError:
             return val
-    return val
+    return unescape(val) if unescape_enabled() else val
 
 
 # ---- 缩放 / 转 webp ----

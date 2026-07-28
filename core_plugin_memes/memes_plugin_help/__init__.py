@@ -49,7 +49,9 @@ _HELP_SECTIONS: List[Tuple[str, List[Tuple[str, str, str, int]]]] = [
                 "<P><表情关键词> [图/文字/@QQ/自己] [--option val]",
                 "<P0>摸 自己",
                 "核心命令。`自己`=发送者头像，`@123456`=指定 QQ 头像；"
-                "`--option val` / `--option=val` 透传到后端。",
+                "`--option val` / `--option=val` 透传到后端；"
+                "只要 1 段文字的表情可直接带空格写，需要多段时每段用引号包住，"
+                "`\\n` 换行。",
                 6,
             ),
             (

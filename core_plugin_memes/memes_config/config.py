@@ -91,6 +91,16 @@ CONFIG_DEFAULT = {
         "min_images=1 且未提供图片时，自动使用发送者头像",
         True,
     ),
+    "MemeSingleTextWhole": GsBoolConfig(
+        "单段文字整段传入",
+        "表情最多只要 1 段文字时，剥掉 @/选项后剩余原文整段作为文字，不按空格切分",
+        True,
+    ),
+    "MemeUnescapeText": GsBoolConfig(
+        "解析文本转义",
+        "开启后文字/选项值里的 \\n \\t \\r \\\\ 转成真实换行等字符；关闭则原样传给后端",
+        True,
+    ),
     "MemeUseDefaultWhenNoText": GsBoolConfig(
         "无文字自动用默认文字",
         "min_texts>0 且未提供文字时，自动使用 default_texts",

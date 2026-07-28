@@ -27,11 +27,14 @@ from ..utils.event_helpers import (
     get_sender_avatar_bytes,
     get_sender_name,
     parse_meme_invocation,
+    parse_single_text_invocation,
     resize_to_webp,
+    single_text_enabled,
     split_text_tokens,
 )
 from ..utils.gate import passes_gate
 from ..utils.manager import meme_manager
+from ..utils.nickname import nickname_cache
 from ..utils.nsfw import check_input, check_output
 from ..utils.prefix import primary_prefix
 
@@ -129,7 +132,7 @@ async def _resolve_images(
     """拼装 (images_with_name, texts, user_infos, debug_notes, options, at_display_names)。
 
     at_display_names 用于"meme 需要文字而用户只 at 了人"时作为兜底文字。
-    自己 → ev.sender 的 card/nickname；其它 @ → user_id 字串。
+    自己 → ev.sender 的 card/nickname；其它 @ → 昵称缓存，未命中用 user_id。
     """
     image_bytes: List[Tuple[str, bytes]] = []
     user_infos: List[Dict[str, Any]] = []
@@ -145,8 +148,12 @@ async def _resolve_images(
             image_bytes.append(("image", data))
 
     # 2) 解析文字 token，提取 --option / @123 / 自己 / 普通文字
-    tokens = split_text_tokens(rest_text)
-    texts, at_user_ids, options = parse_meme_invocation(info, tokens)
+    if info.max_texts == 1 and single_text_enabled():
+        texts, at_user_ids, options = parse_single_text_invocation(info, rest_text)
+    else:
+        texts, at_user_ids, options = parse_meme_invocation(
+            info, split_text_tokens(rest_text)
+        )
 
     # 3) 把 ev.at_list 中的用户也算上
     extra_at = list(ev.at_list or [])
@@ -166,9 +173,12 @@ async def _resolve_images(
                 notes.append("无法获取你的头像")
                 at_display_names.append(name)
         else:
-            # 跨平台获取任意 @用户的 card 需要 IM API；这里用 user_id 兜底
+            # at 段只带 user_id，昵称查本地缓存，查不到退回 user_id
             data = await fetch_qq_avatar_bytes(str(token))
-            display = str(token)
+            display = (
+                nickname_cache.get(ev.bot_id, str(token), ev.group_id)
+                or str(token)
+            )
             if data:
                 image_bytes.append((display, data))
                 user_infos.append({"name": display, "gender": "unknown"})
@@ -359,7 +369,8 @@ async def _do_make(
 参数文本约定（必须把 text 拼成这个格式）：
 - 文本开头是表情关键词（如「拍」「摸」「点赞」），关键词后可紧跟可选 token。
 - 多余 token 之间用空格分隔。可用 token：
-    * 普通文字：表情内填入的台词。
+    * 普通文字：表情内填入的台词。只要 1 段文字的表情，剥掉 @/选项后剩余
+      整段都算文字（可含空格）；需要多段文字时每段用引号包住。`\\n` 表示换行。
     * `自己`：用调用者本人的头像。
     * `@123456`：把指定 QQ 头像当作素材图。
     * `--<option> <value>`：表情专属选项（先调 `查看表情详情` 拿到选项名）。

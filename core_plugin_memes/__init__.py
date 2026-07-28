@@ -17,6 +17,7 @@ from . import memes_help  # noqa: F401, E402
 from . import memes_info  # noqa: F401, E402
 from . import memes_make  # noqa: F401, E402
 from . import memes_manage  # noqa: F401, E402
+from . import memes_nickname  # noqa: F401, E402
 from . import memes_plugin_help  # noqa: F401, E402
 from . import memes_refresh  # noqa: F401, E402
 from . import memes_search  # noqa: F401, E402

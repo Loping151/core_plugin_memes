@@ -50,6 +50,9 @@ class NormalizedOption:
     choices: Optional[List[str]] = None
     minimum: Optional[float] = None
     maximum: Optional[float] = None
+    # takes_value=False 时是无值 flag，命中即取 const_value（如 `-y` → mode="yes"）
+    takes_value: bool = True
+    const_value: Any = None
 
 
 @dataclass
@@ -415,24 +418,35 @@ class MemeClient:
             )
             help_text = opt.get("help_text") or ""
             default = opt.get("default")
-            # 类型兜底，从 args_model 里推断
+            dest = opt.get("dest") or primary_long or (
+                short_aliases[0] if short_aliases else ""
+            )
+            # args 为空即无值 flag，取 action.value 作为常量（无 action 时视作 True）
+            opt_args = opt.get("args") or []
+            takes_value = bool(opt_args)
+            const_value = None
+            if not takes_value:
+                const_value = (opt.get("action") or {}).get("value")
+                if const_value is None:
+                    const_value = True
+            # 类型：优先 args 声明，其次 args_model 里 dest 字段的类型
             args_model = args_type.get("args_model", {})
             props = args_model.get("properties", {}) if isinstance(args_model, dict) else {}
-            field_meta = props.get(primary_long, {}) if isinstance(props, dict) else {}
-            field_type = field_meta.get("type", "string") or "string"
-            if field_type == "boolean":
+            field_meta = props.get(dest, {}) if isinstance(props, dict) else {}
+            field_type = str(opt_args[0].get("value") or "") if takes_value else ""
+            if not field_type:
+                field_type = field_meta.get("type", "string") or "string"
+            if field_type in ("boolean", "bool"):
                 opt_type = "boolean"
-            elif field_type == "integer":
+            elif field_type in ("integer", "int"):
                 opt_type = "integer"
-            elif field_type == "number":
+            elif field_type in ("number", "float"):
                 opt_type = "float"
             else:
                 opt_type = "string"
             options.append(
                 NormalizedOption(
-                    name=opt.get("dest")
-                    or primary_long
-                    or (short_aliases[0] if short_aliases else ""),
+                    name=dest,
                     type=opt_type,
                     description=help_text or field_meta.get("description"),
                     default=default,
@@ -441,6 +455,8 @@ class MemeClient:
                     choices=field_meta.get("enum"),
                     minimum=field_meta.get("minimum"),
                     maximum=field_meta.get("maximum"),
+                    takes_value=takes_value,
+                    const_value=const_value,
                 )
             )
 
@@ -473,15 +489,18 @@ class MemeClient:
         for opt in params.get("options", []):
             opt_type = opt.get("type", "string")
             flags = opt.get("parser_flags") or {}
-            short_aliases = list(flags.get("short_aliases") or [])
-            if flags.get("short"):
-                short_aliases.append(opt.get("name"))
+            name = opt.get("name", "")
+            # rs 的 short_aliases 是不带 `-` 的字符，short=true 表示短名取 name 首字母
+            short_aliases = [f"-{a}" for a in (flags.get("short_aliases") or []) if a]
+            if flags.get("short") and name:
+                short_aliases.append(f"-{name[0]}")
             long_aliases = list(flags.get("long_aliases") or [])
-            if flags.get("long"):
-                long_aliases.append(opt.get("name"))
+            if flags.get("long") and name:
+                long_aliases.append(name)
+            takes_value = opt_type != "boolean"
             options.append(
                 NormalizedOption(
-                    name=opt.get("name", ""),
+                    name=name,
                     type=opt_type,
                     description=opt.get("description"),
                     default=opt.get("default"),
@@ -490,6 +509,8 @@ class MemeClient:
                     choices=opt.get("choices"),
                     minimum=opt.get("minimum"),
                     maximum=opt.get("maximum"),
+                    takes_value=takes_value,
+                    const_value=None if takes_value else True,
                 )
             )
 
