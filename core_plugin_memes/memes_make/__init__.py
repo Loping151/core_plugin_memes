@@ -47,6 +47,13 @@ sv_make = SV("表情包制作核心", priority=20)
 _INIT_LOCK = asyncio.Lock()
 
 
+def _effective_at_list(ev: Event) -> List[str]:
+    ats = [str(a) for a in (ev.at_list or [])]
+    if ev.bot_id == "qq_official":
+        ats = [a for a in ats if a not in (ev.bot_self_id, ev.bot_id, ev.real_bot_id)]
+    return ats
+
+
 async def _ensure_init() -> bool:
     """命令路径用：若 manager 还没 ready，启动后台拉取（不阻塞当前命令），返回 False。
 
@@ -156,7 +163,7 @@ async def _resolve_images(
         )
 
     # 3) 把 ev.at_list 中的用户也算上
-    extra_at = list(ev.at_list or [])
+    extra_at = _effective_at_list(ev)
     # 合并到 at_user_ids，但保持出现顺序（at_list 一般在 token 之前出现，置前）
     merged_ats = list(extra_at) + at_user_ids
 
@@ -433,7 +440,7 @@ async def _random_meme(bot: Bot, ev: Event):
     rest = ev.text.strip()
     tokens = split_text_tokens(rest)
     # 临时算一下你提供的 image/text 数量，从而筛掉不合适的表情
-    explicit_images_n = len(ev.image_list or []) + len(ev.at_list or [])
+    explicit_images_n = len(ev.image_list or []) + len(_effective_at_list(ev))
     has_self = "自己" in tokens
     n_images_hint = explicit_images_n + (1 if has_self else 0)
     n_texts_hint = sum(
