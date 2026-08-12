@@ -181,7 +181,7 @@ async def _resolve_images(
                 at_display_names.append(name)
         else:
             # at 段只带 user_id，昵称查本地缓存，查不到退回 user_id
-            data = await fetch_qq_avatar_bytes(str(token))
+            data = await fetch_qq_avatar_bytes(str(token), ev=ev)
             display = (
                 nickname_cache.get(ev.bot_id, str(token), ev.group_id)
                 or str(token)

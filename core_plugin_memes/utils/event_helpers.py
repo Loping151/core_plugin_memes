@@ -47,13 +47,18 @@ async def fetch_image_bytes(url_or_b64: str) -> Optional[bytes]:
     return None
 
 
-async def fetch_qq_avatar_bytes(qid: str, size: int = 640) -> Optional[bytes]:
-    url = f"http://q1.qlogo.cn/g?b=qq&nk={qid}&s={size}"
+async def fetch_qq_avatar_bytes(
+    qid: str, size: int = 640, ev: Optional[Event] = None
+) -> Optional[bytes]:
+    if ev is not None and ev.bot_id == "qqgroup":
+        url = f"https://q.qlogo.cn/qqapp/{ev.bot_self_id}/{qid}/100"
+    else:
+        url = f"http://q1.qlogo.cn/g?b=qq&nk={qid}&s={size}"
     return await fetch_image_bytes(url)
 
 
 async def get_sender_avatar_bytes(ev: Event) -> Optional[bytes]:
-    """尽量获取发送者头像字节。"""
+    """尽量获取发送者头像字节。拿不到真头像时接受企鹅占位图。"""
     if ev.sender and isinstance(ev.sender, dict):
         avatar_url = ev.sender.get("avatar")
         if isinstance(avatar_url, str) and avatar_url.startswith(("http", "https")):
